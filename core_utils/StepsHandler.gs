@@ -1,7 +1,7 @@
 var DandapaniIndexLength = 5;
 var dialogResponse = [];
 var DandapaniStartingIndex = 11;
-var MyTasksId = '';
+var MyTasksId = 'MDE4MjQ2OTI3MTE5MjYxNjM3NTg6MDow';
 
 function HandleStepEdit(e) {
   var spreadSheet = SpreadsheetApp.getActiveSpreadsheet();
@@ -74,15 +74,20 @@ function GetInitiativeUpdateValues(stepSheet, modifiedRow, postRangeValues, edit
   var totalSteps = remainingSteps + currentStep;
 
   if (editedRowData[0] == 'Accomplished') {
-    // Verify Dandapani Index and Energy Cost First if accomplished
-    ValidateDandapaniIndex(stepSheet, editedRowData, modifiedRow);
     // Set values
-    for (var i = 0; i < dialogResponse.length; i++) {
-      editedRowData[DandapaniStartingIndex + i] = dialogResponse[i];
+    for (var i = 0; i < 5; i++) {
+      editedRowData[DandapaniStartingIndex+i] = -1;
     }
 
     // Get grading
-    editedRowData[18] = GradeStep();
+    if (editedRowData[16] == null) {
+      editedRowData[16] = AddStepCost();
+    }
+
+    // Get grading
+    if (editedRowData[18] == null) {
+      editedRowData[18] = GradeStep();
+    }
 
     // Set start date;
     if (editedRowData[7] == null || editedRowData[7] == '') {
@@ -170,6 +175,15 @@ function CalculateIndexAndEnergy(localSteps, editedRowData, totalSteps) {
   return aggregatedIndex;
 }
 
+function AddStepCost() {
+  var ui = SpreadsheetApp.getUi(); // Same variations.
+
+  var result = ui.prompt(
+    'Enter the amount of energy used',
+    ui.ButtonSet.OK_CANCEL);
+  return Number(result.getResponseText());
+}
+
 function GradeStep() {
   var ui = SpreadsheetApp.getUi(); // Same variations.
 
@@ -177,44 +191,4 @@ function GradeStep() {
     'Grade the quality of the step form 1-10',
     ui.ButtonSet.OK_CANCEL);
   return Number(result.getResponseText());
-
-}
-
-function showPrompt() {
-  var ui = SpreadsheetApp.getUi(); // Same variations.
-
-  var result = ui.prompt(
-    'Provide value separated by comms: Willpower, Concentration, Awareness, Understanding, Theory of Mind',
-    ui.ButtonSet.OK_CANCEL);
-
-  // // Process the user's response.
-  var button = result.getSelectedButton();
-  var text = result.getResponseText();
-  if (text == null) {
-    if (button == ui.Button.CANCEL || button == ui.Button.CLOSE) {
-      // User clicked "Cancel".
-      ui.alert('Please supply values.');
-      showPrompt();
-    }
-  } else {
-    var responses = text.split(",");
-    if (responses.length != DandapaniIndexLength + 1) {
-      ui.alert('Values does not match');
-    } else {
-      dialogResponse = responses;
-    }
-  }
-}
-
-function ValidateDandapaniIndex(sheet, rowData, rowId) {
-  var headers = GetRowRange(sheet, 1).getValues();
-  for (var i = 0; i < DandapaniIndexLength; i++) {
-    if (typeof rowData[10 + i + 1] === 'number') {
-      if (rowData[10 + i + 1] >= 0 && rowData[10 + i + 1] <= 3) {
-        continue
-      }
-    }
-    showPrompt();
-    break;
-  }
 }
